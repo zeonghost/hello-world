@@ -1,3 +1,8 @@
+    ########
+    This code is no longer being use in hardware, i just put it here as a record
+    ########
+
+
 #!/usr/bin/env python
 import pymodbus
 import serial.rs485
