@@ -15,6 +15,9 @@ while True:
     resultPut = firebase.put('pi1/pond1/temp',"value",a)
     print(resultPut)
     
+    ########
+    This code is no longer being use in hardware, i just put it here as a record
+    ########
 
 
 
