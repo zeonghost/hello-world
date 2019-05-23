@@ -1,11 +1,22 @@
 #!/usr/bin/env python
-import pymodbus
-import serial.rs485
-from pymodbus.client.common import *
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
-from pymodbus.transaction import ModbusRtuFramer
+import temp
+import tempuplode
 import RPi.GPIO as GPIO
 import time
+#declear of relay
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+from firebase import firebase
+#firebase = firebase.FirebaseApplication('https://testproject-9c322.firebaseio.com/')
+newdb = firebase.FirebaseApplication('https://aquaculture-7393d.firebaseio.com/')
+
+#cred = credentials.Certificate("./aquaculture-7393d-firebase-adminsdk-xy9ar-5a66acf0d0.json")
+#firebase_admin.initialize_app(cred, {
+#    'databaseURL': 'https://aquaculture-7393d.firebaseio.com'
+#})
+#ref = db.reference('pi1-pond1')
+#declear firebase address
 
 Relay_Ch1 = 26
 Relay_Ch2 = 20
@@ -18,20 +29,50 @@ GPIO.setup(Relay_Ch1,GPIO.OUT)
 GPIO.setup(Relay_Ch2,GPIO.OUT)
 GPIO.setup(Relay_Ch3,GPIO.OUT)
 
-client = ModbusClient(method='rtu', port='/dev/ttyUSB0', timeout=1, stopbits = 1, bytesize = 8,  parity='N', baudrate= 9600)
-client.connect()
+GPIO.output(Relay_Ch1,GPIO.HIGH)
+GPIO.output(Relay_Ch2,GPIO.HIGH)
+GPIO.output(Relay_Ch3,GPIO.HIGH)
+#relay
 
+high=newdb.get('pi1-pond1', "high")
+low=newdb.get('pi1-pond1', "low")
+
+#high=ref.get('high')
+#low=ref.get('low')
+
+b=300
 
 while True:
-    rr = client.read_holding_registers(7, 1, unit=1)
-    print "The temperature is ", rr.registers[0] / 10.0,"Celsius"
-    a=rr.registers[0]
-    if a > 320 or a < 290 :
-        GPIO.output(Relay_Ch1,GPIO.LOW)
-        print("Channel 1:The Common Contact is access to the Normal Open Contact!")
-        time.sleep(0.5)
+    a=temp.getTemp()
+    tempuplode.calTemp()
+    if b != a:
+        newdb.put('pi1-pond1',"temp",a)
+        #ref.update({'temp': a})
+        b=a
+    c=newdb.get('pi1-pond1', "auto")
+    #c=ref.get('auto')
+    if c == 0:
+        print("Automatic: off");
+        d = newdb.get('pi1-pond1', "ch1")
+        if d == 1:
+            GPIO.output(Relay_Ch1,GPIO.LOW)
+            print("Channel 1:ON")
+        else:
+            GPIO.output(Relay_Ch1,GPIO.HIGH)
+            print("Channel 1:OFF")
     else:
-        GPIO.output(Relay_Ch1,GPIO.HIGH)
-        print("Channel 1:The Common Contact is access to the Normal Closed Contact!\n")
-        time.sleep(0.5)
+        if a > high or a < low:
+            GPIO.output(Relay_Ch1,GPIO.LOW)
+            print("Channel 1:ON")
+            newdb.put('pi1-pond1',"ch1",1)
+            #ref.update({'ch1', 1})
+        else:
+            GPIO.output(Relay_Ch1,GPIO.HIGH)
+            print("Channel 1:OFF")
+            newdb.put('pi1-pond1',"ch1",0)
+            #ref.update('ch1', 0)
+    time.sleep(5)
     
+
+    
+
