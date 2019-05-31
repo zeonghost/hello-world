@@ -3,6 +3,9 @@ import temp
 import tempuplode
 import RPi.GPIO as GPIO
 import time
+import schedule
+import os
+import threading
 #declear of relay
 import firebase_admin
 from firebase_admin import credentials
@@ -10,13 +13,6 @@ from firebase_admin import db
 from firebase import firebase
 #firebase = firebase.FirebaseApplication('https://testproject-9c322.firebaseio.com/')
 newdb = firebase.FirebaseApplication('https://aquaculture-7393d.firebaseio.com/')
-
-#cred = credentials.Certificate("./aquaculture-7393d-firebase-adminsdk-xy9ar-5a66acf0d0.json")
-#firebase_admin.initialize_app(cred, {
-#    'databaseURL': 'https://aquaculture-7393d.firebaseio.com'
-#})
-#ref = db.reference('pi1-pond1')
-#declear firebase address
 
 Relay_Ch1 = 26
 Relay_Ch2 = 20
@@ -32,47 +28,82 @@ GPIO.setup(Relay_Ch3,GPIO.OUT)
 GPIO.output(Relay_Ch1,GPIO.HIGH)
 GPIO.output(Relay_Ch2,GPIO.HIGH)
 GPIO.output(Relay_Ch3,GPIO.HIGH)
-#relay
+#relay setup defult off
 
 high=newdb.get('pi1-pond1', "high")
 low=newdb.get('pi1-pond1', "low")
 
-#high=ref.get('high')
-#low=ref.get('low')
-
 b=300
+'''
+def ch2On():
+    GPIO.output(Relay_Ch2,GPIO.LOW)
+    print("Channel 2: ON")
+    newdb.put('pi1-pond1',"ch2",1)
+    time.sleep(60);
+    GPIO.output(Relay_Ch2,GPIO.HIGH)
+    print("Channel 2: OFF")
+    newdb.put('pi1-pond1',"ch2",0)
+
+def ch2Off():
+    GPIO.output(Relay_Ch2,GPIO.HIGH)
+    print("Channel 2: OFF")
+    newdb.put('pi1-pond1',"ch2",0)
+'''
+
+def run_threaded(job_func):
+     job_thread = threading.Thread(target=job_func)
+     job_thread.start()
+    
+
+schedule.every().hour.at(":00").do(run_threaded, tempuplode.up)
+schedule.every(10).minutes.do(run_threaded, tempuplode.upa)
+#schedule.every(1).minutes.do(run_threaded, ch2On)
+#schedule.every(2).minutes.do(run_threaded, ch2Off)
 
 while True:
     a=temp.getTemp()
-    tempuplode.calTemp()
-    if b != a:
-        newdb.put('pi1-pond1',"temp",a)
-        #ref.update({'temp': a})
-        b=a
-    c=newdb.get('pi1-pond1', "auto")
-    #c=ref.get('auto')
-    if c == 0:
-        print("Automatic: off");
-        d = newdb.get('pi1-pond1', "ch1")
-        if d == 1:
+    tempuplode.rec()
+    exit_code = os.system('ping -c 1 www.google.com')
+    if exit_code:
+        print("No Internet Connection, Offline Model")
+        if a > high or a < low:
             GPIO.output(Relay_Ch1,GPIO.LOW)
             print("Channel 1:ON")
         else:
             GPIO.output(Relay_Ch1,GPIO.HIGH)
             print("Channel 1:OFF")
     else:
-        if a > high or a < low:
-            GPIO.output(Relay_Ch1,GPIO.LOW)
-            print("Channel 1:ON")
-            newdb.put('pi1-pond1',"ch1",1)
-            #ref.update({'ch1', 1})
+        schedule.run_pending()
+        high=newdb.get('pi1-pond1', "high")
+        low=newdb.get('pi1-pond1', "low")
+        if b != a:
+            newdb.put('pi1-pond1',"temp",a)
+            b=a
+        c=newdb.get('pi1-pond1', "au to")
+        if c == 0:
+            print("Automatic: off");
+            d = newdb.get('pi1-pond1', "ch1")
+            e = newdb.get('pi1-pond1', "ch2")
+            if d == 1:
+                GPIO.output(Relay_Ch1,GPIO.LOW)
+                print("Channel 1:ON")
+            else:
+                GPIO.output(Relay_Ch1,GPIO.HIGH)
+                print("Channel 1:OFF")
+            if e == 1:
+                GPIO.output(Relay_Ch2,GPIO.LOW)
+                print("Channel 2:ON")
+            else:
+                GPIO.output(Relay_Ch2,GPIO.HIGH)
+                print("Channel 2:OFF")
         else:
-            GPIO.output(Relay_Ch1,GPIO.HIGH)
-            print("Channel 1:OFF")
-            newdb.put('pi1-pond1',"ch1",0)
-            #ref.update('ch1', 0)
-    time.sleep(5)
+            if a > high or a < low:
+                GPIO.output(Relay_Ch1,GPIO.LOW)
+                print("Channel 1:ON")
+                newdb.put('pi1-pond1',"ch1",1)
+            else:
+                GPIO.output(Relay_Ch1,GPIO.HIGH)
+                print("Channel 1:OFF")
+                newdb.put('pi1-pond1',"ch1",0)
+        time.sleep(1)
     
-
-    
-
