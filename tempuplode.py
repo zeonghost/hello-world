@@ -8,17 +8,14 @@ from datetime import datetime, timedelta
 import temp
 import sys
 import os
+import schedule
+import threading
 
 new = []
 new1 = []
 
-#cred = credentials.Certificate("./serviceKey.json")
-#app = firebase_admin.initialize_app(cred)
-#store = firestore.client()
-
-
 newdb = firebase.FirebaseApplication('https://aquaculture-7393d.firebaseio.com/')
-#firebase = firebase.FirebaseApplication('https://testproject-9c322.firebaseio.com/')
+
 
 with open('save.txt', 'r+') as f:
     line=f.readline()
@@ -40,42 +37,13 @@ with open('save1.txt', 'r+') as f2:
         d=int(d)
         new1.append(d)
         
-        
-"""
-def calTemp():
-    if len(new) > 50:
-        nsum=0
-        nsum+=sum(new)
-        average=nsum/len(new)
-        #data={u'val' :average}
-        #doc_ref = store.collection(u'pi/pi1/pond1/temp')
-        #doc_ref.add({u'val': average, u'time': (datetime.now()-timedelta(hours=8))})
-        #data={u(datetime.now()-timedelta(hours=8)): average}
-        #store.collection(u'pi/pi1/pond1').document(u'temp').set(data)
-        #firebase.put('pi1-temp', datetime.now()-timedelta(hours=8), average)
-        #newdb.put("/pi1-temp", datetime.now().strftime("%b%d%Y-%H%S"), average)
-        #newdb.post("/pi1-temp", {"val":average, "time":datetime.now().strftime("%b%d%Y-%H:%M")})
-        newdb.post("/pi1-temp", {"val":average, "time":time.mktime(datetime.now().timetuple())})
-        print('uplode to database')
-        new[:]=[]
-        #os.remove("save.txt")
-        open('save.txt', 'w').close()
-        print("save.txt has been clear")
-    else:
-        a=temp.getTemp()
-        print(a)
-        new.append(a)
-        b=str(a)
-        with open("save.txt", "a") as f:
-            f.writelines([b, '\n'])
-        time.sleep(5)
-"""
 
 def up():
     nsum=0
     nsum+=sum(new)
     average=nsum/len(new)
-    newdb.post("/pi1-temp-fore", {"val":average, "time":time.mktime(datetime.now().timetuple())})
+    #newdb.post("/pi1-temp-fore", {"val":average, "time":time.mktime(datetime.now().timetuple())})
+    newdb.post("/pi1-forecast-test", {"val":average, "date": time.strftime("%b %d, %Y", time.localtime()),"time":time.strftime("%I:%M %p", time.localtime())})
     print('uplode to database')
     new[:]=[]
     open('save.txt', 'w').close()
@@ -102,6 +70,18 @@ def rec():
         f.writelines([b, '\n'])
     with open("save1.txt", "a") as f1:
         f1.writelines([b, '\n'])
+
+def run_threaded(job_func):
+     job_thread = threading.Thread(target=job_func)
+     job_thread.start()
+    
+schedule.every().hour.at(":00").do(run_threaded, up)
+schedule.every(10).minutes.do(run_threaded, upa)
+
+while True:
+    rec()
+    time.sleep(1)
+    schedule.run_pending()
     
 
 

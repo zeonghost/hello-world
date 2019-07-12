@@ -2,10 +2,16 @@
 
 import os
 import subprocess
-while True:
+import threading
+
+def m1():
     res = subprocess.Popen('ps -ef | grep control', stdout=subprocess.PIPE, shell=True)
     attn=res.stdout.readlines()
     count=len(attn)
     if count<3:
         os.system('sudo python /home/pi/code/control.py')
-        ## os.system('reboot')
+
+while True:
+    m1()
+
+
