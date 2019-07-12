@@ -76,7 +76,13 @@ def run_threaded(job_func):
      job_thread.start()
     
 schedule.every().hour.at(":00").do(run_threaded, up)
-schedule.every(10).minutes.do(run_threaded, upa)
+schedule.every().hour.at(":01").do(run_threaded, upa)
+schedule.every().hour.at(":11").do(run_threaded, upa)
+schedule.every().hour.at(":21").do(run_threaded, upa)
+schedule.every().hour.at(":31").do(run_threaded, upa)
+schedule.every().hour.at(":41").do(run_threaded, upa)
+schedule.every().hour.at(":51").do(run_threaded, upa)
+#schedule.every(10).minutes.do(run_threaded, upa)
 
 while True:
     rec()
