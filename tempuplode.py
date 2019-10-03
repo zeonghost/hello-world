@@ -16,8 +16,7 @@ new1 = []
 
 newdb = firebase.FirebaseApplication('https://aquaculture-7393d.firebaseio.com/')
 
-
-with open('save.txt', 'r+') as f:
+with open('/home/pi/save.txt', 'r+') as f:
     line=f.readline()
     if line != "":
         line=line.replace("\n", "")
@@ -27,7 +26,7 @@ with open('save.txt', 'r+') as f:
         c=int(c)
         new.append(c)
         
-with open('save1.txt', 'r+') as f2:
+with open('/home/pi/save1.txt', 'r+') as f2:
     line1=f2.readline()
     if line1 != "":
         line1=line1.replace("\n", "")
@@ -37,18 +36,15 @@ with open('save1.txt', 'r+') as f2:
         d=int(d)
         new1.append(d)
         
-
 def up():
     nsum=0
     nsum+=sum(new)
     average=nsum/len(new)
-    #newdb.post("/pi1-temp-fore", {"val":average, "time":time.mktime(datetime.now().timetuple())})
     newdb.post("/pi1-forecast-test", {"val":average, "date": time.strftime("%b %d, %Y", time.localtime()),"time":time.strftime("%I:%M %p", time.localtime())})
     print('uplode to database')
     new[:]=[]
-    open('save.txt', 'w').close()
+    open('/home/pi/save.txt', 'w').close()
     print("save.txt has been clear")
-
 
 def upa():
     nsum1=0
@@ -57,7 +53,7 @@ def upa():
     newdb.post("/pi1-temp", {"val":average1, "time":time.mktime(datetime.now().timetuple())})
     print('uplode to database')
     new1[:]=[]
-    open('save1.txt', 'w').close()
+    open('/home/pi/save1.txt', 'w').close()
     print("save1.txt has been clear")
 
 def rec():
@@ -66,9 +62,9 @@ def rec():
     new.append(a)
     new1.append(a)
     b=str(a)
-    with open("save.txt", "a") as f:
+    with open("/home/pi/save.txt", "a") as f:
         f.writelines([b, '\n'])
-    with open("save1.txt", "a") as f1:
+    with open("/home/pi/save1.txt", "a") as f1:
         f1.writelines([b, '\n'])
 
 def run_threaded(job_func):
@@ -82,7 +78,6 @@ schedule.every().hour.at(":21").do(run_threaded, upa)
 schedule.every().hour.at(":31").do(run_threaded, upa)
 schedule.every().hour.at(":41").do(run_threaded, upa)
 schedule.every().hour.at(":51").do(run_threaded, upa)
-#schedule.every(10).minutes.do(run_threaded, upa)
 
 while True:
     rec()

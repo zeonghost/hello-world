@@ -9,9 +9,8 @@ def m1():
     attn=res.stdout.readlines()
     count=len(attn)
     if count<3:
-        os.system('sudo python /home/pi/code/control.py')
-
+        os.system('sudo python /home/pi/control.py')
+    
 while True:
     m1()
-
 

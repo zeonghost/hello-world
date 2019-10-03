@@ -9,7 +9,7 @@ def m3():
     attn=res.stdout.readlines()
     count=len(attn)
     if count<3:
-        os.system('sudo python /home/pi/code/tempuplode.py')
+        os.system('sudo python /home/pi/tempuplode.py')
 
 while True:
     m3()

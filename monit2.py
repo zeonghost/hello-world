@@ -9,7 +9,7 @@ def m2():
     attn1=res1.stdout.readlines()
     count1=len(attn1)
     if count1<3:
-        os.system('sudo python /home/pi/code/ch2.py')
+        os.system('sudo python /home/pi/ch2.py')
 
 while True:
     m2()
